@@ -4,7 +4,7 @@ import { Field, UInt64, Poseidon } from 'o1js';
 // Helper Functions
 
 // Calculate the height of a node in the MMR
-function getHeight(elementIndex) {
+function getHeight(elementIndex: UInt64) {
   let h = elementIndex;
   while (!allOnes(h).toBoolean()) {
     const highestBit = pow2(bitLength(h).sub(UInt64.one));

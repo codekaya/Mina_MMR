@@ -21,8 +21,7 @@ import {
  
  
  Functions:
- 
- Append
+ append(data : Field) 
  GetProof
  VerifyProof
  GetProofs
@@ -34,6 +33,14 @@ import {
  Clear
  
  Utility Functions:
+ count_ones(n: number)
+ findPeaks(elementCount: UInt64): UInt64[]
+ bintreeJumpRightSibling(elementIndex: UInt64): UInt64
+ bintreeMoveDownLeft(elementIndex: UInt64): UInt64
+ getHeight(elementIndex: UInt64): UInt64
+ allOnes(num: UInt64): Bool
+ pow2(exponent: UInt64): UInt64
+ bitLength(num: UInt64): UInt64
  mapLeafIndexToElementIndex(leafIndex: number)
  mapElementIndexToLeafIndex(elementIndex: number)
  
