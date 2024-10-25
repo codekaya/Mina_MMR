@@ -84,7 +84,7 @@ import {
      // Increment elements count and store the leaf hash
      this.elementsCount = this.elementsCount.add(1);
      const elementIndex = this.elementsCount.toBigInt();
-     this.hashes[0] =leafHash;
+     this.hashes[Number(elementIndex)] =leafHash;
      console.log(leafHash)
      return leafHash;
      // Build the peaks and update the MMR
@@ -106,7 +106,113 @@ import {
    leaf_count_to_mmr_size(leaf_count: number) {
      return 2 * leaf_count - this.count_ones(leaf_count);
    }
- }
+
+}
+//-------FIND PEAKS---------------
+/**
+ * Finds the peaks in a Merkle Mountain Range (MMR) given the element count.
+ * @param elementCount The number of elements in the MMR.
+ * @returns An array of peak positions.
+ */
+function findPeaks(elementCount: UInt64): UInt64[] {
+  if (elementCount.equals(UInt64.zero).toBoolean()) return [];
+
+  const peaks: UInt64[] = [];
+  let top = UInt64.one;
+
+  // Find the largest power of 2 <= elementCount
+  while (top.sub(UInt64.one).lessThanOrEqual(elementCount).toBoolean()) {
+    top = top.mul(UInt64.from(2));
+  }
+  top = top.div(UInt64.from(2)).sub(UInt64.one);
+
+  if (top.equals(UInt64.zero).toBoolean()) return [UInt64.one];
+
+  // Initialize with the first peak
+  let peak = top;
+  peaks.push(peak);
+  let outer = true;
+
+  while (outer) {
+    peak = bintreeJumpRightSibling(peak);
+
+    while (peak.greaterThan(elementCount).toBoolean()) {
+      peak = bintreeMoveDownLeft(peak);
+      if (peak.equals(UInt64.zero).toBoolean()) {
+        outer = false;
+        break;
+      }
+    }
+
+    if (outer) peaks.push(peak);
+  }
+
+  return peaks;
+}
+
+// Helper functions
+
+function bintreeJumpRightSibling(elementIndex: UInt64): UInt64 {
+  const height = getHeight(elementIndex);
+  const shiftAmount = height.add(UInt64.one);
+  const increment = pow2(shiftAmount).sub(UInt64.one);
+  return elementIndex.add(increment);
+}
+
+function bintreeMoveDownLeft(elementIndex: UInt64): UInt64 {
+  const height = getHeight(elementIndex);
+  if (height.equals(UInt64.zero).toBoolean()) {
+    return UInt64.zero;
+  }
+  const decrement = pow2(height);
+  return elementIndex.sub(decrement);
+}
+
+function getHeight(elementIndex: UInt64): UInt64 {
+  let h = elementIndex;
+  while (allOnes(h).not().toBoolean()) {
+    const highestBit = pow2(bitLength(h).sub(UInt64.one));
+    h = h.sub(highestBit.sub(UInt64.one));
+  }
+  return bitLength(h).sub(UInt64.one);
+}
+
+function allOnes(num: UInt64): Bool {
+  const ones = pow2(bitLength(num)).sub(UInt64.one);
+  return num.equals(ones);
+}
+
+function bitLength(num: UInt64): UInt64 {
+  // Compute the bit length of num
+  let length = UInt64.zero;
+  let temp = num;
+
+  while (temp.greaterThan(UInt64.zero).toBoolean()) {
+    temp = temp.div(UInt64.from(2));
+    length = length.add(UInt64.one);
+  }
+
+  return length;
+}
+
+function pow2(exponent: UInt64): UInt64 {
+  // Compute 2^exponent
+  let result = UInt64.one;
+  const two = UInt64.from(2);
+  let exp = exponent;
+
+  while (exp.greaterThan(UInt64.zero).toBoolean()) {
+    result = result.mul(two);
+    exp = exp.sub(UInt64.one);
+  }
+
+  return result;
+}
+
+
+//----------------------------------------
+
+ 
  
  export class Mmr extends SmartContract {
    @state(Field) num = State<Field>();
@@ -129,6 +235,11 @@ import {
      console.log(this.num, "syao");
      console.log(x);
      this.num.set(x);
+
+     // Example usage
+    const elementCount = UInt64.from(22); // example element count
+    const peaks = findPeaks(elementCount);
+    console.log('Peaks:', peaks.map((p) => p.toString())); // Outputs the peak positions in the MMR
    }
  
    @method async update() {
