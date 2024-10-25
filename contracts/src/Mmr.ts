@@ -94,6 +94,64 @@ import {
      //this.rootHash = this._bagPeaks();
    }
  
+//    append(value) {
+//     if (!this.isElementSizeValid(value)) {
+//       throw new Error("Element size is too big to hash with this hasher");
+//     }
+
+//     const elementsCount = this.elementsCount;
+//     const peaksIndices = findPeaks(elementsCount);
+//     const peaks = this.retrievePeaksHashes(peaksIndices);
+
+//     // Increment elementsCount
+//     this.elementsCount = this.elementsCount.add(UInt64.one);
+//     let lastElementIdx = this.elementsCount;
+
+//     const leafElementIndex = lastElementIdx;
+
+//     // Store the new value at the last index
+//     this.hashes.set(lastElementIdx.toString(), value);
+
+//     // Add the new value to peaks
+//     peaks.push(value);
+
+//     let height = UInt64.zero;
+
+//     // Loop to update peaks and compute parent hashes
+//     while (getHeight(lastElementIdx.add(UInt64.one)).greaterThan(height).toBoolean()) {
+//       lastElementIdx = lastElementIdx.add(UInt64.one);
+
+//       const rightHash = peaks.pop();
+//       const leftHash = peaks.pop();
+
+//       const parentHash = this.hasher.hash([leftHash, rightHash]);
+//       this.hashes.set(lastElementIdx.toString(), parentHash);
+//       peaks.push(parentHash);
+
+//       height = height.add(UInt64.one);
+//     }
+
+//     // Update elementsCount with the last index used
+//     this.elementsCount = lastElementIdx;
+
+//     // Bag the peaks to compute the final root hash
+//     this.peaks = peaks; // Store the updated peaks
+//     const bag = this.bagThePeaks();
+//     const rootHash = this.calculateRootHash(bag, lastElementIdx);
+//     this.rootHash = rootHash;
+
+//     // Increment leavesCount
+//     this.leavesCount = this.leavesCount.add(UInt64.one);
+
+//     // Return the updated counts and root hash
+//     return {
+//       leavesCount: this.leavesCount,
+//       elementsCount: this.elementsCount,
+//       elementIndex: leafElementIndex,
+//       rootHash: this.rootHash,
+//     };
+//   }
+
    count_ones(n: number) {
      let sum = 0;
      while (n) {
