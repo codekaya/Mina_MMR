@@ -1,5 +1,5 @@
 import { AccountUpdate, Field, Mina, PrivateKey, PublicKey } from 'o1js';
-import { Add } from './Add';
+import { Mmr } from './Mmr';
 
 /*
  * This file specifies how to test the `Add` example smart contract. It is safe to delete this file and replace
@@ -17,10 +17,10 @@ describe('Add', () => {
     senderKey: PrivateKey,
     zkAppAddress: PublicKey,
     zkAppPrivateKey: PrivateKey,
-    zkApp: Add;
+    zkApp: Mmr;
 
   beforeAll(async () => {
-    if (proofsEnabled) await Add.compile();
+    if (proofsEnabled) await Mmr.compile();
   });
 
   beforeEach(async () => {
@@ -32,7 +32,7 @@ describe('Add', () => {
 
     zkAppPrivateKey = PrivateKey.random();
     zkAppAddress = zkAppPrivateKey.toPublicKey();
-    zkApp = new Add(zkAppAddress);
+    zkApp = new Mmr(zkAppAddress);
   });
 
   async function localDeploy() {
