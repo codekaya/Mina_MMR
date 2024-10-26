@@ -1,18 +1,26 @@
-# Merkle Mountain Range Implementation in o1.js
+# Mina zkApp: Contracts
 
-This project demonstrates how to implement a Merkle Mountain Range (MMR) using o1.js for zkApps on the Mina Protocol. It showcases how to manage off-chain data structures while ensuring on-chain data integrity through cryptographic commitments, leveraging the power of zk-SNARKs.
+This template uses TypeScript.
 
-## Installation
+## How to build
 
-Clone the repository and install the dependencies using npm:
+```sh
+npm run build
+```
 
-```bash
-# Clone the repository
-git clone https://github.com/codekaya/Mina_MMR
-cd Mima_MMR
+## How to run tests
 
-# Install dependencies
-npm install
+```sh
+npm run test
+npm run testw # watch mode
+```
 
-# Ensure o1.js is installed
-npm install o1js
+## How to run coverage
+
+```sh
+npm run coverage
+```
+
+## License
+
+[Apache-2.0](LICENSE)
