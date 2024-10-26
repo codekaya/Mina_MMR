@@ -17,6 +17,10 @@ npm install
 # Ensure o1.js is installed
 npm install o1js
 
+# Run test cases to verify the MMR implementation:
+npm run test
+
+```
 
 ## License
 
