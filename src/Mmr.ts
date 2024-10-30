@@ -159,6 +159,16 @@ import {
 //     };
 //   }
 
+/**
+     * Clears the MMR to reset its state.
+     */
+ clear() {
+  this.leavesCount = UInt64.zero;
+  this.elementsCount = UInt64.zero;
+  this.hashes.fill(Field(0));
+  this.rootHash = Field(0);
+}
+
    count_ones(n: number) {
      let sum = 0;
      while (n) {
