@@ -86,8 +86,6 @@ import {
     * Append a new leaf to the MMR.
     * @param {Field} data - The data to add to the MMR.
     */
- 
-
     append(value: Field): {
       leavesCount: UInt64;
       elementsCount: UInt64;
@@ -284,6 +282,44 @@ import {
       peaksHashes: peaksHashes,
       elementsCount: treeSize,
     });
+  }
+
+  /**
+     * Verifies the inclusion proof of a leaf in the MMR.
+     * @param {Field} leaf - The leaf value.
+     * @param {Proof} proof - The inclusion proof.
+     * @returns {Bool} True if the proof is valid.
+     */
+   verifyProof(leaf: Field, proof: Proof): Bool {
+    let { elementIndex, siblingsHashes, peaksHashes, elementsCount } = proof;
+
+    if (elementIndex.lessThan(UInt64.one).toBoolean()) {
+      throw new Error('Index must be greater than 1');
+    }
+    if (elementIndex.greaterThan(elementsCount).toBoolean()) {
+      throw new Error('Index must be in the tree');
+    }
+
+    let hash = leaf;
+
+    for (let i = 0; i < siblingsHashes.length; i++) {
+      const proofHash = siblingsHashes[i];
+      const isRight = getHeight(elementIndex.add(UInt64.one))
+        .equals(getHeight(elementIndex).add(UInt64.one))
+        .toBoolean();
+      elementIndex = isRight
+        ? elementIndex.add(UInt64.one)
+        : elementIndex.add(parentOffset(getHeight(elementIndex)));
+      hash = isRight
+        ? Poseidon.hash([proofHash, hash])
+        : Poseidon.hash([hash, proofHash]);
+    }
+
+    // Check if hash is in peaksHashes
+    const isInPeaks = peaksHashes.some((peakHash) =>
+      peakHash.equals(hash).toBoolean()
+    );
+    return new Bool(isInPeaks);
   }
 
 
