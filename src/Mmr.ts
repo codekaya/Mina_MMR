@@ -511,6 +511,7 @@ export class Mmr extends SmartContract {
     const proof = initialMMR.getProof(UInt64.one);
     const isValid = initialMMR.verifyProof(Field(1), proof);
     console.log('Proof valid:', isValid.toBoolean());
+    this.num.set(Field(1));
   }
 
   @method async update() {
