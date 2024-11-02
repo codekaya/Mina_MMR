@@ -11,6 +11,17 @@ import {
     Provable
    } from 'o1js';
  
+
+     /**
+   * Proof structure for inclusion proofs.
+   */
+  class Proof extends Struct({
+    elementIndex: UInt64,
+    elementHash: Field,
+    siblingsHashes: [Field],
+    peaksHashes: [Field],
+    elementsCount: UInt64,
+  }) {}
  /*
  
  Struct MMR
@@ -227,6 +238,54 @@ import {
 //     };
 //   }
 
+ /**
+     * Generates a proof of inclusion for a specific leaf.
+     * @param {UInt64} leafIndex - The index of the leaf.
+     * @returns {Proof} Inclusion proof.
+     */
+  getProof(leafIndex: UInt64): Proof {
+    if (leafIndex.lessThan(UInt64.one).toBoolean()) {
+      throw new Error('Index must be greater than 1');
+    }
+
+    const treeSize = this.elementsCount;
+    if (leafIndex.greaterThan(treeSize).toBoolean()) {
+      throw new Error('Index must be less than the tree size');
+    }
+
+    const peaks = findPeaks(treeSize);
+    const siblings: UInt64[] = [];
+    let index = leafIndex;
+
+    while (!peaks.some((peak) => peak.equals(index).toBoolean())) {
+      const isRight = getHeight(index.add(UInt64.one))
+        .equals(getHeight(index).add(UInt64.one))
+        .toBoolean();
+      const sib = isRight
+        ? index.sub(siblingOffset(getHeight(index)))
+        : index.add(siblingOffset(getHeight(index)));
+      siblings.push(sib);
+      index = isRight
+        ? index.add(UInt64.one)
+        : index.add(parentOffset(getHeight(index)));
+    }
+
+    const peaksHashes = this.retrievePeaksHashes(peaks);
+    const siblingsHashes = siblings.map(
+      (sib) => this.hashes[Number(sib.toBigInt())]
+    );
+
+    const elementHash = this.hashes[Number(leafIndex.toBigInt())];
+
+    return new Proof({
+      elementIndex: leafIndex,
+      elementHash: elementHash,
+      siblingsHashes: siblingsHashes,
+      peaksHashes: peaksHashes,
+      elementsCount: treeSize,
+    });
+  }
+
 
  /**
      * Bags the peaks to combine them into a single hash.
@@ -440,7 +499,7 @@ function parentOffset(height: UInt64): UInt64 {
      //const x = Provable.if(new Bool(leafHash.equals(a)), Field(1), Field(5));
      console.log(this.num, "syao");
      //console.log(x);
-     //this.num.set(x);
+     this.num.set(Field(1));
 
      // Example usage
     const elementCount = UInt64.from(22); // example element count
