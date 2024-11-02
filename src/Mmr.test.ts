@@ -27,15 +27,15 @@ describe('MerkleMountainRange Tests', () => {
 
   it('should append elements and update root hash', () => {
     const mmr = new MerkleMountainRange();
-    const values = [Field(1), Field(2), Field(3)];
+    const values = [Field(1), Field(2), Field(3), Field(1), Field(2), Field(3)];
 
     values.forEach((value) => {
       const { rootHash } = mmr.append(value);
       expect(rootHash).toBeInstanceOf(Field);
     });
 
-    expect(mmr.leavesCount).toEqual(UInt64.from(3));
-    expect(mmr.elementsCount.greaterThan(UInt64.from(3)).toBoolean()).toBe(true);
+    expect(mmr.leavesCount).toEqual(UInt64.from(6));
+    expect(mmr.elementsCount.greaterThan(UInt64.from(6)).toBoolean()).toBe(true);
     expect(mmr.rootHash).toBeInstanceOf(Field);
   });
 
@@ -55,24 +55,24 @@ describe('MerkleMountainRange Tests', () => {
     expect(isValid.toBoolean()).toBe(true);
   });
 
-  // it('should fail verification for incorrect proof', () => {
-  //   const mmr = new MerkleMountainRange();
-  //   const values = [Field(100), Field(200), Field(300)];
+  it('should fail verification for incorrect proof', () => {
+    const mmr = new MerkleMountainRange();
+    const values = [Field(100), Field(200), Field(300)];
 
-  //   values.forEach((value) => {
-  //     mmr.append(value);
-  //   });
+    values.forEach((value) => {
+      mmr.append(value);
+    });
 
-  //   const leafIndex = UInt64.from(2);
-  //   const proof = mmr.getProof(leafIndex);
+    const leafIndex = UInt64.from(2);
+    const proof = mmr.getProof(leafIndex);
 
-  //   // Tamper with the proof
-  //   proof.elementHash = Poseidon.hash([Field(999)]);
-
-  //   // Verify the proof
-  //   const isValid = mmr.verifyProof(values[1], proof);
-  //   expect(isValid.toBoolean()).toBe(false);
-  // });
+    // Tamper with the proof
+    //proof.elementHash = Poseidon.hash([Field(999)]);
+    proof.peaksHashes[0] = Poseidon.hash([Field(999)]);
+    // Verify the proof
+    const isValid = mmr.verifyProof(values[1], proof);
+    expect(isValid.toBoolean()).toBe(false);
+  });
 
   it('should clear the MMR', () => {
     const mmr = new MerkleMountainRange();
