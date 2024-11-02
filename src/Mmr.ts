@@ -397,6 +397,24 @@ function pow2(exponent: UInt64): UInt64 {
   return result;
 }
 
+/**
+   * Computes the sibling offset based on the height.
+   * @param {UInt64} height - The height.
+   * @returns {UInt64} The sibling offset.
+   */
+ function siblingOffset(height: UInt64): UInt64 {
+  return pow2(height);
+}
+
+/**
+ * Computes the parent offset based on the height.
+ * @param {UInt64} height - The height.
+ * @returns {UInt64} The parent offset.
+ */
+function parentOffset(height: UInt64): UInt64 {
+  return pow2(height.add(UInt64.one)).sub(UInt64.one);
+}
+
 
 //----------------------------------------
 
