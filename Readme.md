@@ -8,8 +8,8 @@ Clone the repository and install the dependencies using npm:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/mmr-o1js.git
-cd mmr-o1js
+git clone https://github.com/codekaya/Mina_MMR
+cd Mina_MMR
 
 # Install dependencies
 npm install
