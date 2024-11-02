@@ -322,6 +322,16 @@ import {
     return new Bool(isInPeaks);
   }
 
+  /**
+     * Retrieves the current peaks of the MMR.
+     * @returns {Field[]} Array of peak hashes.
+     */
+   getPeaks(): Field[] {
+    const treeSize = this.elementsCount;
+    const peaksIdxs = findPeaks(treeSize);
+    const peaks = this.retrievePeaksHashes(peaksIdxs);
+    return peaks;
+  }
 
  /**
      * Bags the peaks to combine them into a single hash.
