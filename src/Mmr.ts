@@ -17,7 +17,7 @@ const MAX_ELEMENTS = 2097151; // 2,097,151 = 2^(h+1)-1   max_height=20
 /**
  * Proof structure for inclusion proofs.
  */
-class Proof extends Struct({
+export class Proof extends Struct({
   elementIndex: UInt64,
   elementHash: Field,
   siblingsHashes: [Field],
