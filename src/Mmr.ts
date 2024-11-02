@@ -1,246 +1,191 @@
-import { 
-    Field,
-    SmartContract,
-    UInt64,Struct, 
-    Poseidon, 
-    state, 
-    State, 
-    method ,
-    Circuit, 
-    Bool,
-    Provable
-   } from 'o1js';
- 
+import {
+  Field,
+  SmartContract,
+  UInt64,
+  Struct,
+  Poseidon,
+  state,
+  State,
+  method,
+  Circuit,
+  Bool,
+  Provable,
+} from 'o1js';
 
-     /**
-   * Proof structure for inclusion proofs.
-   */
-  class Proof extends Struct({
-    elementIndex: UInt64,
-    elementHash: Field,
-    siblingsHashes: [Field],
-    peaksHashes: [Field],
-    elementsCount: UInt64,
-  }) {}
- /*
- 
- Struct MMR
- leavesCount
- elementsCount
- hashes
- RootHash
- 
- 
- Functions:
- append(data : Field) 
- GetProof
- VerifyProof
- GetProofs
- VerifyProofs
- GetPeaks
- BagThePeaks
- CalculateRootHash
- RetrievePeaksHashes
- Clear
- 
- Utility Functions:
- count_ones(n: number)
- findPeaks(elementCount: UInt64): UInt64[]
- bintreeJumpRightSibling(elementIndex: UInt64): UInt64
- bintreeMoveDownLeft(elementIndex: UInt64): UInt64
- getHeight(elementIndex: UInt64): UInt64
- allOnes(num: UInt64): Bool
- pow2(exponent: UInt64): UInt64
- bitLength(num: UInt64): UInt64
- mapLeafIndexToElementIndex(leafIndex: number)
- mapElementIndexToLeafIndex(elementIndex: number)
- 
+const MAX_ELEMENTS = 2097151; // 2,097,151 = 2^(h+1)-1   max_height=20
 
+/**
+ * Proof structure for inclusion proofs.
  */
- 
- 
- const MAX_ELEMENTS = 2097151;  // 2,097,151 = 2^(h+1)-1   max_height=20
- const MAX_LEAFS = 1048576 //2^10  = 1,048,576
- 
- /**
-  * Merkle Mountain Range class.
-  */
-  class MerkleMountainRange extends Struct({
-   leavesCount : UInt64,
-   elementsCount: UInt64,
-   hashes: [Field, MAX_ELEMENTS],
-   rootHash: Field,
- }) {
-   constructor() {
- 
-     const initialData = Array(MAX_ELEMENTS).fill(Field(0));
-     super({
-       leavesCount: UInt64.zero,
-       elementsCount: UInt64.zero,
-       hashes: initialData,
-       rootHash: new Field(0),
-     });
-   }
- 
-   /**
-    * Append a new leaf to the MMR.
-    * @param {Field} data - The data to add to the MMR.
-    */
-    append(value: Field): {
-      leavesCount: UInt64;
-      elementsCount: UInt64;
-      elementIndex: UInt64;
-      rootHash: Field;
-    } {
-      // Increment elementsCount
-      let elementsCount = this.elementsCount;
-      const peaksIndices = findPeaks(elementsCount);
-      let peaks = this.retrievePeaksHashes(peaksIndices);
-    
-      // Increment elementsCount
-      elementsCount = elementsCount.add(UInt64.one);
-      let lastElementIdx = elementsCount;
-    
-      const leafElementIndex = lastElementIdx;
-    
-      // Store the new value at the last index
-      this.hashes[Number(lastElementIdx.toBigInt())] = value;
-    
-      // Add the new value to peaks
-      peaks.push(value);
-    
-      let height = UInt64.zero;
-    
-      // Loop to update peaks and compute parent hashes
-      while (
-        getHeight(lastElementIdx.add(UInt64.one))
-          .greaterThan(height)
-          .toBoolean()
-      ) {
-        lastElementIdx = lastElementIdx.add(UInt64.one);
-    
-        // Ensure peaks has enough elements
-        if (peaks.length < 2) {
-          throw new Error('Not enough elements in peaks to pop');
-        }
-    
-        const rightHash = peaks.pop()!;
-        const leftHash = peaks.pop()!;
-    
-        const parentHash = Poseidon.hash([leftHash, rightHash]);
-        this.hashes[Number(lastElementIdx.toBigInt())] = parentHash;
-        peaks.push(parentHash);
-    
-        height = height.add(UInt64.one);
+class Proof extends Struct({
+  elementIndex: UInt64,
+  elementHash: Field,
+  siblingsHashes: [Field],
+  peaksHashes: [Field],
+  elementsCount: UInt64,
+}) {}
+
+/**
+ * Merkle Mountain Range class.
+ */
+class MerkleMountainRange extends Struct({
+  leavesCount: UInt64,
+  elementsCount: UInt64,
+  hashes: [Field, MAX_ELEMENTS],
+  rootHash: Field,
+}) {
+  constructor() {
+    const initialData = Array(MAX_ELEMENTS).fill(Field(0));
+    super({
+      leavesCount: UInt64.zero,
+      elementsCount: UInt64.zero,
+      hashes: initialData,
+      rootHash: Field(0),
+    });
+  }
+
+  /**
+   * Appends a new value to the MMR.
+   * @param {Field} value - The value to append.
+   * @returns Updated counts and root hash.
+   */
+  // append(value: Field): {
+  //   leavesCount: UInt64;
+  //   elementsCount: UInt64;
+  //   elementIndex: UInt64;
+  //   rootHash: Field;
+  // } {
+  //   // Increment elementsCount
+  //   let elementsCount = this.elementsCount;
+  //   const peaksIndices = findPeaks(elementsCount);
+  //   let peaks = this.retrievePeaksHashes(peaksIndices);
+
+  //   // Increment elementsCount
+  //   elementsCount = elementsCount.add(UInt64.one);
+  //   let lastElementIdx = elementsCount;
+
+  //   const leafElementIndex = lastElementIdx;
+
+  //   // Store the new value at the last index
+  //   this.hashes[Number(lastElementIdx.toBigInt())] = value;
+
+  //   // Add the new value to peaks
+  //   peaks.push(value);
+
+  //   let height = UInt64.zero;
+
+  //   // Loop to update peaks and compute parent hashes
+  //   while (
+  //     getHeight(lastElementIdx.add(UInt64.one))
+  //       .greaterThan(height)
+  //       .toBoolean()
+  //   ) {
+  //     lastElementIdx = lastElementIdx.add(UInt64.one);
+
+  //     const rightHash = peaks.pop();
+  //     const leftHash = peaks.pop();
+
+  //     const parentHash = Poseidon.hash([leftHash, rightHash]);
+  //     this.hashes[Number(lastElementIdx.toBigInt())] = parentHash;
+  //     peaks.push(parentHash);
+
+  //     height = height.add(UInt64.one);
+  //   }
+
+  //   // Update elementsCount with the last index used
+  //   this.elementsCount = lastElementIdx;
+
+  //   // Bag the peaks to compute the final root hash
+  //   const bag = this.bagThePeaks(peaks);
+  //   const rootHash = this.calculateRootHash(bag, lastElementIdx);
+  //   this.rootHash = rootHash;
+
+  //   // Increment leavesCount
+  //   this.leavesCount = this.leavesCount.add(UInt64.one);
+
+  //   // Return the updated counts and root hash
+  //   return {
+  //     leavesCount: this.leavesCount,
+  //     elementsCount: this.elementsCount,
+  //     elementIndex: leafElementIndex,
+  //     rootHash: this.rootHash,
+  //   };
+  // }
+
+  append(value: Field): {
+    leavesCount: UInt64;
+    elementsCount: UInt64;
+    elementIndex: UInt64;
+    rootHash: Field;
+  } {
+    // Increment elementsCount
+    let elementsCount = this.elementsCount;
+    const peaksIndices = findPeaks(elementsCount);
+    let peaks = this.retrievePeaksHashes(peaksIndices);
+  
+    // Increment elementsCount
+    elementsCount = elementsCount.add(UInt64.one);
+    let lastElementIdx = elementsCount;
+  
+    const leafElementIndex = lastElementIdx;
+  
+    // Store the new value at the last index
+    this.hashes[Number(lastElementIdx.toBigInt())] = value;
+  
+    // Add the new value to peaks
+    peaks.push(value);
+  
+    let height = UInt64.zero;
+  
+    // Loop to update peaks and compute parent hashes
+    while (
+      getHeight(lastElementIdx.add(UInt64.one))
+        .greaterThan(height)
+        .toBoolean()
+    ) {
+      lastElementIdx = lastElementIdx.add(UInt64.one);
+  
+      // Ensure peaks has enough elements
+      if (peaks.length < 2) {
+        throw new Error('Not enough elements in peaks to pop');
       }
-    
-      // Update elementsCount with the last index used
-      this.elementsCount = lastElementIdx;
-    
-      // Bag the peaks to compute the final root hash
-      const bag = this.bagThePeaks(peaks);
-      const rootHash = this.calculateRootHash(bag, lastElementIdx);
-      this.rootHash = rootHash;
-    
-      // Increment leavesCount
-      this.leavesCount = this.leavesCount.add(UInt64.one);
-    
-      // Return the updated counts and root hash
-      return {
-        leavesCount: this.leavesCount,
-        elementsCount: this.elementsCount,
-        elementIndex: leafElementIndex,
-        rootHash: this.rootHash,
-      };
+  
+      const rightHash = peaks.pop()!;
+      const leftHash = peaks.pop()!;
+  
+      const parentHash = Poseidon.hash([leftHash, rightHash]);
+      this.hashes[Number(lastElementIdx.toBigInt())] = parentHash;
+      peaks.push(parentHash);
+  
+      height = height.add(UInt64.one);
     }
-  //   append(data : Field) {
-  //    // Validate input
-  //    if (!(data instanceof Field)) {
-  //      throw new Error('Data must be an instance of Field.');
-  //    }
- 
-  //    // Increment leaves count
-  //    this.leavesCount = this.leavesCount.add(1);
- 
-  //    // Hash the data to create the leaf hash
-  //    const leafHash = Poseidon.hash([data]);
- 
-  //    // Increment elements count and store the leaf hash
-  //    this.elementsCount = this.elementsCount.add(1);
-  //    const elementIndex = this.elementsCount.toBigInt();
-  //    this.hashes[Number(elementIndex)] =leafHash;
-  //    console.log(leafHash)
-  //    return leafHash;
-  //    // Build the peaks and update the MMR
-  //    //this._buildPeaks(leafHash, elementIndex);
- 
-  //    // Update the root hash
-  //    //this.rootHash = this._bagPeaks();
-  //  }
- 
-//    append(value) {
-//     if (!this.isElementSizeValid(value)) {
-//       throw new Error("Element size is too big to hash with this hasher");
-//     }
+  
+    // Update elementsCount with the last index used
+    this.elementsCount = lastElementIdx;
+  
+    // Bag the peaks to compute the final root hash
+    const bag = this.bagThePeaks(peaks);
+    const rootHash = this.calculateRootHash(bag, lastElementIdx);
+    this.rootHash = rootHash;
+  
+    // Increment leavesCount
+    this.leavesCount = this.leavesCount.add(UInt64.one);
+  
+    // Return the updated counts and root hash
+    return {
+      leavesCount: this.leavesCount,
+      elementsCount: this.elementsCount,
+      elementIndex: leafElementIndex,
+      rootHash: this.rootHash,
+    };
+  }
+  
 
-//     const elementsCount = this.elementsCount;
-//     const peaksIndices = findPeaks(elementsCount);
-//     const peaks = this.retrievePeaksHashes(peaksIndices);
-
-//     // Increment elementsCount
-//     this.elementsCount = this.elementsCount.add(UInt64.one);
-//     let lastElementIdx = this.elementsCount;
-
-//     const leafElementIndex = lastElementIdx;
-
-//     // Store the new value at the last index
-//     this.hashes.set(lastElementIdx.toString(), value);
-
-//     // Add the new value to peaks
-//     peaks.push(value);
-
-//     let height = UInt64.zero;
-
-//     // Loop to update peaks and compute parent hashes
-//     while (getHeight(lastElementIdx.add(UInt64.one)).greaterThan(height).toBoolean()) {
-//       lastElementIdx = lastElementIdx.add(UInt64.one);
-
-//       const rightHash = peaks.pop();
-//       const leftHash = peaks.pop();
-
-//       const parentHash = this.hasher.hash([leftHash, rightHash]);
-//       this.hashes.set(lastElementIdx.toString(), parentHash);
-//       peaks.push(parentHash);
-
-//       height = height.add(UInt64.one);
-//     }
-
-//     // Update elementsCount with the last index used
-//     this.elementsCount = lastElementIdx;
-
-//     // Bag the peaks to compute the final root hash
-//     this.peaks = peaks; // Store the updated peaks
-//     const bag = this.bagThePeaks();
-//     const rootHash = this.calculateRootHash(bag, lastElementIdx);
-//     this.rootHash = rootHash;
-
-//     // Increment leavesCount
-//     this.leavesCount = this.leavesCount.add(UInt64.one);
-
-//     // Return the updated counts and root hash
-//     return {
-//       leavesCount: this.leavesCount,
-//       elementsCount: this.elementsCount,
-//       elementIndex: leafElementIndex,
-//       rootHash: this.rootHash,
-//     };
-//   }
-
- /**
-     * Generates a proof of inclusion for a specific leaf.
-     * @param {UInt64} leafIndex - The index of the leaf.
-     * @returns {Proof} Inclusion proof.
-     */
+  /**
+   * Generates a proof of inclusion for a specific leaf.
+   * @param {UInt64} leafIndex - The index of the leaf.
+   * @returns {Proof} Inclusion proof.
+   */
   getProof(leafIndex: UInt64): Proof {
     if (leafIndex.lessThan(UInt64.one).toBoolean()) {
       throw new Error('Index must be greater than 1');
@@ -285,12 +230,12 @@ import {
   }
 
   /**
-     * Verifies the inclusion proof of a leaf in the MMR.
-     * @param {Field} leaf - The leaf value.
-     * @param {Proof} proof - The inclusion proof.
-     * @returns {Bool} True if the proof is valid.
-     */
-   verifyProof(leaf: Field, proof: Proof): Bool {
+   * Verifies the inclusion proof of a leaf in the MMR.
+   * @param {Field} leaf - The leaf value.
+   * @param {Proof} proof - The inclusion proof.
+   * @returns {Bool} True if the proof is valid.
+   */
+  verifyProof(leaf: Field, proof: Proof): Bool {
     let { elementIndex, siblingsHashes, peaksHashes, elementsCount } = proof;
 
     if (elementIndex.lessThan(UInt64.one).toBoolean()) {
@@ -323,21 +268,21 @@ import {
   }
 
   /**
-     * Retrieves the current peaks of the MMR.
-     * @returns {Field[]} Array of peak hashes.
-     */
-   getPeaks(): Field[] {
+   * Retrieves the current peaks of the MMR.
+   * @returns {Field[]} Array of peak hashes.
+   */
+  getPeaks(): Field[] {
     const treeSize = this.elementsCount;
     const peaksIdxs = findPeaks(treeSize);
     const peaks = this.retrievePeaksHashes(peaksIdxs);
     return peaks;
   }
 
- /**
-     * Bags the peaks to combine them into a single hash.
-     * @param {Field[]} peaks - Array of peak hashes.
-     * @returns {Field} Combined root hash.
-     */
+  /**
+   * Bags the peaks to combine them into a single hash.
+   * @param {Field[]} peaks - Array of peak hashes.
+   * @returns {Field} Combined root hash.
+   */
   bagThePeaks(peaks: Field[]): Field {
     if (peaks.length === 0) {
       return Field(0);
@@ -367,45 +312,48 @@ import {
   }
 
   /**
-     * Retrieves hashes for given peak indices.
-     * @param {UInt64[]} peaksIndices - Indices of the peaks.
-     * @returns {Field[]} Array of peak hashes.
-     */
-   retrievePeaksHashes(peaksIndices: UInt64[]): Field[] {
+   * Retrieves hashes for given peak indices.
+   * @param {UInt64[]} peaksIndices - Indices of the peaks.
+   * @returns {Field[]} Array of peak hashes.
+   */
+  retrievePeaksHashes(peaksIndices: UInt64[]): Field[] {
     return peaksIndices.map(
       (index) => this.hashes[Number(index.toBigInt())]
     );
   }
 
-/**
-     * Clears the MMR to reset its state.
-     */
- clear() {
-  this.leavesCount = UInt64.zero;
-  this.elementsCount = UInt64.zero;
-  this.hashes.fill(Field(0));
-  this.rootHash = Field(0);
+  /**
+   * Clears the MMR to reset its state.
+   */
+  clear() {
+    this.leavesCount = UInt64.zero;
+    this.elementsCount = UInt64.zero;
+    this.hashes.fill(Field(0));
+    this.rootHash = Field(0);
+  }
+
+  // Utility Functions
+
+  count_ones(n: number): number {
+    let sum = 0;
+    while (n) {
+      sum++;
+      n &= n - 1;
+    }
+    return sum;
+  }
+
+  leaf_count_to_mmr_size(leaf_count: number): number {
+    return 2 * leaf_count - this.count_ones(leaf_count);
+  }
 }
 
-   count_ones(n: number) {
-     let sum = 0;
-     while (n) {
-         sum++;
-         n &= n - 1;
-     }
-     return sum;
-   }
- 
-   leaf_count_to_mmr_size(leaf_count: number) {
-     return 2 * leaf_count - this.count_ones(leaf_count);
-   }
+// Helper Functions
 
-}
-//-------FIND PEAKS---------------
 /**
  * Finds the peaks in a Merkle Mountain Range (MMR) given the element count.
- * @param elementCount The number of elements in the MMR.
- * @returns An array of peak positions.
+ * @param {UInt64} elementCount - The number of elements in the MMR.
+ * @returns {UInt64[]} An array of peak positions.
  */
 function findPeaks(elementCount: UInt64): UInt64[] {
   if (elementCount.equals(UInt64.zero).toBoolean()) return [];
@@ -414,7 +362,9 @@ function findPeaks(elementCount: UInt64): UInt64[] {
   let top = UInt64.one;
 
   // Find the largest power of 2 <= elementCount
-  while (top.sub(UInt64.one).lessThanOrEqual(elementCount).toBoolean()) {
+  while (
+    top.sub(UInt64.one).lessThanOrEqual(elementCount).toBoolean()
+  ) {
     top = top.mul(UInt64.from(2));
   }
   top = top.div(UInt64.from(2)).sub(UInt64.one);
@@ -443,8 +393,11 @@ function findPeaks(elementCount: UInt64): UInt64[] {
   return peaks;
 }
 
-// Helper functions
-
+/**
+ * Finds the index of the right sibling in the binary tree.
+ * @param {UInt64} elementIndex - The current index.
+ * @returns {UInt64} The sibling index.
+ */
 function bintreeJumpRightSibling(elementIndex: UInt64): UInt64 {
   const height = getHeight(elementIndex);
   const shiftAmount = height.add(UInt64.one);
@@ -452,6 +405,11 @@ function bintreeJumpRightSibling(elementIndex: UInt64): UInt64 {
   return elementIndex.add(increment);
 }
 
+/**
+ * Moves down to the left child in the binary tree.
+ * @param {UInt64} elementIndex - The current index.
+ * @returns {UInt64} The left child index.
+ */
 function bintreeMoveDownLeft(elementIndex: UInt64): UInt64 {
   const height = getHeight(elementIndex);
   if (height.equals(UInt64.zero).toBoolean()) {
@@ -461,6 +419,11 @@ function bintreeMoveDownLeft(elementIndex: UInt64): UInt64 {
   return elementIndex.sub(decrement);
 }
 
+/**
+ * Determines the height of a node in the MMR.
+ * @param {UInt64} elementIndex - The node index.
+ * @returns {UInt64} The height.
+ */
 function getHeight(elementIndex: UInt64): UInt64 {
   let h = elementIndex;
   while (allOnes(h).not().toBoolean()) {
@@ -470,11 +433,21 @@ function getHeight(elementIndex: UInt64): UInt64 {
   return bitLength(h).sub(UInt64.one);
 }
 
+/**
+ * Checks if a number's binary representation consists of all ones.
+ * @param {UInt64} num - The number to check.
+ * @returns {Bool} True if all ones.
+ */
 function allOnes(num: UInt64): Bool {
   const ones = pow2(bitLength(num)).sub(UInt64.one);
   return num.equals(ones);
 }
 
+/**
+ * Calculates the number of bits needed to represent num.
+ * @param {UInt64} num - The number.
+ * @returns {UInt64} The bit length.
+ */
 function bitLength(num: UInt64): UInt64 {
   // Compute the bit length of num
   let length = UInt64.zero;
@@ -488,6 +461,11 @@ function bitLength(num: UInt64): UInt64 {
   return length;
 }
 
+/**
+ * Computes exponents of 2 efficiently.
+ * @param {UInt64} exponent - The exponent.
+ * @returns {UInt64} The result of 2^exponent.
+ */
 function pow2(exponent: UInt64): UInt64 {
   // Compute 2^exponent
   let result = UInt64.one;
@@ -503,11 +481,11 @@ function pow2(exponent: UInt64): UInt64 {
 }
 
 /**
-   * Computes the sibling offset based on the height.
-   * @param {UInt64} height - The height.
-   * @returns {UInt64} The sibling offset.
-   */
- function siblingOffset(height: UInt64): UInt64 {
+ * Computes the sibling offset based on the height.
+ * @param {UInt64} height - The height.
+ * @returns {UInt64} The sibling offset.
+ */
+function siblingOffset(height: UInt64): UInt64 {
   return pow2(height);
 }
 
@@ -520,43 +498,25 @@ function parentOffset(height: UInt64): UInt64 {
   return pow2(height.add(UInt64.one)).sub(UInt64.one);
 }
 
+export class Mmr extends SmartContract {
+  @state(Field) num = State<Field>();
+  @state(Field) leavesCount = State<Field>();
 
-//----------------------------------------
+  init() {
+    super.init();
+    this.num.set(Field(2));
+    const initialMMR = new MerkleMountainRange();
+    this.num.set(initialMMR.append(Field(1)).rootHash);
+    const leafHash = Poseidon.hash([Field(1)]);
+    const proof = initialMMR.getProof(UInt64.one);
+    const isValid = initialMMR.verifyProof(Field(1), proof);
+    console.log('Proof valid:', isValid.toBoolean());
+  }
 
- 
- 
- export class Mmr extends SmartContract {
-   @state(Field) num = State<Field>();
-   @state(Field) leavesCount = State<Field>();
- 
-   init() {
-     super.init();
-     this.num.set(Field(2));
-     const initialMMR = new MerkleMountainRange();
-     //this.num.set(initialMMR.append(Field(1)));
-     const a = initialMMR.append(Field(1))
-     const leafHash = Poseidon.hash([Field(1)]);
-     //console.log("leaf", leafHash);
-     //console.log("a", a);
-     // if(leafHash==a){
-     //   this.num.set(Field(1));
-     //   console.log("selamm")
-     // }
-     //const x = Provable.if(new Bool(leafHash.equals(a)), Field(1), Field(5));
-     console.log(this.num, "syao");
-     //console.log(x);
-     this.num.set(Field(1));
-
-     // Example usage
-    const elementCount = UInt64.from(22); // example element count
-    const peaks = findPeaks(elementCount);
-    console.log('Peaks:', peaks.map((p) => p.toString())); // Outputs the peak positions in the MMR
-   }
- 
-   @method async update() {
-     const currentState = this.num.getAndRequireEquals();
-     const newState = currentState.add(2);
-     this.num.set(newState);
-   }
- }
- 
+  @method async update() {
+    const currentState = this.num.getAndRequireEquals();
+    const newState = currentState.add(2);
+    console.log('New State', newState);
+    this.num.set(Field(1));
+  }
+}
