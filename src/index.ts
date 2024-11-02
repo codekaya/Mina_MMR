@@ -1,2 +1,2 @@
-import { Mmr } from './Mmr.js';
-export { Mmr };
+import { MerkleMountainRange } from './Mmr.js';
+export { MerkleMountainRange };

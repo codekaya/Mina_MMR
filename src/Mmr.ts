@@ -28,7 +28,7 @@ class Proof extends Struct({
 /**
  * Merkle Mountain Range class.
  */
-class MerkleMountainRange extends Struct({
+export class MerkleMountainRange extends Struct({
   leavesCount: UInt64,
   elementsCount: UInt64,
   hashes: [Field, MAX_ELEMENTS],
@@ -44,73 +44,6 @@ class MerkleMountainRange extends Struct({
     });
   }
 
-  /**
-   * Appends a new value to the MMR.
-   * @param {Field} value - The value to append.
-   * @returns Updated counts and root hash.
-   */
-  // append(value: Field): {
-  //   leavesCount: UInt64;
-  //   elementsCount: UInt64;
-  //   elementIndex: UInt64;
-  //   rootHash: Field;
-  // } {
-  //   // Increment elementsCount
-  //   let elementsCount = this.elementsCount;
-  //   const peaksIndices = findPeaks(elementsCount);
-  //   let peaks = this.retrievePeaksHashes(peaksIndices);
-
-  //   // Increment elementsCount
-  //   elementsCount = elementsCount.add(UInt64.one);
-  //   let lastElementIdx = elementsCount;
-
-  //   const leafElementIndex = lastElementIdx;
-
-  //   // Store the new value at the last index
-  //   this.hashes[Number(lastElementIdx.toBigInt())] = value;
-
-  //   // Add the new value to peaks
-  //   peaks.push(value);
-
-  //   let height = UInt64.zero;
-
-  //   // Loop to update peaks and compute parent hashes
-  //   while (
-  //     getHeight(lastElementIdx.add(UInt64.one))
-  //       .greaterThan(height)
-  //       .toBoolean()
-  //   ) {
-  //     lastElementIdx = lastElementIdx.add(UInt64.one);
-
-  //     const rightHash = peaks.pop();
-  //     const leftHash = peaks.pop();
-
-  //     const parentHash = Poseidon.hash([leftHash, rightHash]);
-  //     this.hashes[Number(lastElementIdx.toBigInt())] = parentHash;
-  //     peaks.push(parentHash);
-
-  //     height = height.add(UInt64.one);
-  //   }
-
-  //   // Update elementsCount with the last index used
-  //   this.elementsCount = lastElementIdx;
-
-  //   // Bag the peaks to compute the final root hash
-  //   const bag = this.bagThePeaks(peaks);
-  //   const rootHash = this.calculateRootHash(bag, lastElementIdx);
-  //   this.rootHash = rootHash;
-
-  //   // Increment leavesCount
-  //   this.leavesCount = this.leavesCount.add(UInt64.one);
-
-  //   // Return the updated counts and root hash
-  //   return {
-  //     leavesCount: this.leavesCount,
-  //     elementsCount: this.elementsCount,
-  //     elementIndex: leafElementIndex,
-  //     rootHash: this.rootHash,
-  //   };
-  // }
 
   append(value: Field): {
     leavesCount: UInt64;
@@ -496,28 +429,4 @@ function siblingOffset(height: UInt64): UInt64 {
  */
 function parentOffset(height: UInt64): UInt64 {
   return pow2(height.add(UInt64.one)).sub(UInt64.one);
-}
-
-export class Mmr extends SmartContract {
-  @state(Field) num = State<Field>();
-  @state(Field) leavesCount = State<Field>();
-
-  init() {
-    super.init();
-    this.num.set(Field(2));
-    const initialMMR = new MerkleMountainRange();
-    this.num.set(initialMMR.append(Field(1)).rootHash);
-    const leafHash = Poseidon.hash([Field(1)]);
-    const proof = initialMMR.getProof(UInt64.one);
-    const isValid = initialMMR.verifyProof(Field(1), proof);
-    console.log('Proof valid:', isValid.toBoolean());
-    this.num.set(Field(1));
-  }
-
-  @method async update() {
-    const currentState = this.num.getAndRequireEquals();
-    const newState = currentState.add(2);
-    console.log('New State', newState);
-    this.num.set(Field(1));
-  }
 }
