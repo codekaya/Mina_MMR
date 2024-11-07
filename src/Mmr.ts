@@ -162,43 +162,98 @@ export class MerkleMountainRange extends Struct({
     });
   }
 
+  // /**
+  //  * Verifies the inclusion proof of a leaf in the MMR.
+  //  * @param {Field} leaf - The leaf value.
+  //  * @param {Proof} proof - The inclusion proof.
+  //  * @returns {Bool} True if the proof is valid.
+  //  */
+  // verifyProof(leaf: Field, proof: Proof): Bool {
+  //   let { elementIndex, siblingsHashes, peaksHashes, elementsCount } = proof;
+
+  //   if (elementIndex.lessThan(UInt64.one).toBoolean()) {
+  //     throw new Error('Index must be greater than 1');
+  //   }
+  //   if (elementIndex.greaterThan(elementsCount).toBoolean()) {
+  //     throw new Error('Index must be in the tree');
+  //   }
+
+  //   let hash = leaf;
+
+  //   for (let i = 0; i < siblingsHashes.length; i++) {
+  //     const proofHash = siblingsHashes[i];
+  //     const isRight = getHeight(elementIndex.add(UInt64.one))
+  //       .equals(getHeight(elementIndex).add(UInt64.one))
+  //       .toBoolean();
+  //     elementIndex = isRight
+  //       ? elementIndex.add(UInt64.one)
+  //       : elementIndex.add(parentOffset(getHeight(elementIndex)));
+  //     hash = isRight
+  //       ? Poseidon.hash([proofHash, hash])
+  //       : Poseidon.hash([hash, proofHash]);
+  //   }
+
+  //   // Check if hash is in peaksHashes
+  //   const isInPeaks = peaksHashes.some((peakHash) =>
+  //     peakHash.equals(hash).toBoolean()
+  //   );
+  //   return new Bool(isInPeaks);
+  // }
+
   /**
-   * Verifies the inclusion proof of a leaf in the MMR.
-   * @param {Field} leaf - The leaf value.
-   * @param {Proof} proof - The inclusion proof.
-   * @returns {Bool} True if the proof is valid.
-   */
-  verifyProof(leaf: Field, proof: Proof): Bool {
-    let { elementIndex, siblingsHashes, peaksHashes, elementsCount } = proof;
+ * Verifies the inclusion proof of a leaf in the MMR.
+ * @param {Field} leaf - The leaf value.
+ * @param {Proof} proof - The inclusion proof.
+ * @returns {Bool} True if the proof is valid.
+ */
+verifyProof(leaf: Field, proof: Proof): Bool {
+  let { elementIndex, siblingsHashes, peaksHashes, elementsCount } = proof;
 
-    if (elementIndex.lessThan(UInt64.one).toBoolean()) {
-      throw new Error('Index must be greater than 1');
-    }
-    if (elementIndex.greaterThan(elementsCount).toBoolean()) {
-      throw new Error('Index must be in the tree');
-    }
-
-    let hash = leaf;
-
-    for (let i = 0; i < siblingsHashes.length; i++) {
-      const proofHash = siblingsHashes[i];
-      const isRight = getHeight(elementIndex.add(UInt64.one))
-        .equals(getHeight(elementIndex).add(UInt64.one))
-        .toBoolean();
-      elementIndex = isRight
-        ? elementIndex.add(UInt64.one)
-        : elementIndex.add(parentOffset(getHeight(elementIndex)));
-      hash = isRight
-        ? Poseidon.hash([proofHash, hash])
-        : Poseidon.hash([hash, proofHash]);
-    }
-
-    // Check if hash is in peaksHashes
-    const isInPeaks = peaksHashes.some((peakHash) =>
-      peakHash.equals(hash).toBoolean()
-    );
-    return new Bool(isInPeaks);
+  if (elementIndex.lessThan(UInt64.one).toBoolean()) {
+    throw new Error('Index must be greater than or equal to 1');
   }
+  if (elementIndex.greaterThan(elementsCount).toBoolean()) {
+    throw new Error('Index must be in the tree');
+  }
+
+  let hash = leaf;
+
+  // Reconstruct the hash up to the peak
+  for (let i = 0; i < siblingsHashes.length; i++) {
+    const proofHash = siblingsHashes[i];
+    const isRight = getHeight(elementIndex.add(UInt64.one))
+      .equals(getHeight(elementIndex).add(UInt64.one))
+      .toBoolean();
+    elementIndex = isRight
+      ? elementIndex.add(UInt64.one)
+      : elementIndex.add(parentOffset(getHeight(elementIndex)));
+    hash = isRight
+      ? Poseidon.hash([proofHash, hash])
+      : Poseidon.hash([hash, proofHash]);
+  }
+
+  // Replace the corresponding peak hash with the reconstructed hash
+  const reconstructedPeaks = peaksHashes.map((peakHash, idx) => {
+    // Check if this peak index corresponds to the reconstructed hash
+    // You might need to adjust this part based on how you identify which peak to replace
+    // For simplicity, let's assume the reconstructed peak is the one that matches the final elementIndex
+    if (peakHash.equals(hash).toBoolean()) {
+      return hash;
+    } else {
+      return peakHash;
+    }
+  });
+
+  // Bag the peaks to recompute the root hash
+  const baggedHash = this.bagThePeaks(reconstructedPeaks);
+
+  // Recompute the root hash
+  const recomputedRootHash = this.calculateRootHash(baggedHash, elementsCount);
+
+  // Compare the recomputed root hash with the MMR's root hash
+  return recomputedRootHash.equals(this.rootHash);
+}
+
 
   /**
    * Retrieves the current peaks of the MMR.

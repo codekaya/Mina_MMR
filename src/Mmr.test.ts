@@ -39,21 +39,38 @@ describe('MerkleMountainRange Tests', () => {
     expect(mmr.rootHash).toBeInstanceOf(Field);
   });
 
+  // it('should generate and verify a proof for an element', () => {
+  //   const mmr = new MerkleMountainRange();
+  //   const values = [Field(10), Field(20),Field(30),Field(40)];
+
+  //   values.forEach((value) => {
+  //     mmr.append(value);
+  //   });
+
+  //   const leafIndex = UInt64.from(2);
+  //   const proof = mmr.getProof(leafIndex);
+  //   console.log("leafindex", leafIndex, "proof", proof, "vales" , values[1]);
+  //   // Verify the proof
+  //   const isValid = mmr.verifyProof(values[1], proof);
+  //   expect(isValid.toBoolean()).toBe(true);
+  // });
+
   it('should generate and verify a proof for an element', () => {
     const mmr = new MerkleMountainRange();
-    const values = [Field(10), Field(20), Field(30)];
-
+    const values = [Field(10), Field(20), Field(30), Field(40), Field(20), Field(30), Field(40), Field(20), Field(30), Field(40), Field(20), Field(30), Field(40)];
+  
     values.forEach((value) => {
       mmr.append(value);
     });
-
-    const leafIndex = UInt64.from(2);
+  
+    const leafIndex = UInt64.from(2); // Indices are 1-based
     const proof = mmr.getProof(leafIndex);
-
+  
     // Verify the proof
-    const isValid = mmr.verifyProof(values[1], proof);
+    const isValid = mmr.verifyProof(values[1], proof); // values[1] corresponds to Field(20)
     expect(isValid.toBoolean()).toBe(true);
   });
+  
 
   it('should fail verification for incorrect proof', () => {
     const mmr = new MerkleMountainRange();
