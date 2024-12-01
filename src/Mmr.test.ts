@@ -4,6 +4,7 @@ import {
   Field,
   UInt64,
   Poseidon,
+  Provable,
 } from 'o1js';
 import { MerkleMountainRange, Proof } from './Mmr'; // Adjust the import path
 
@@ -32,6 +33,12 @@ describe('MerkleMountainRange Tests', () => {
     values.forEach((value) => {
       const { rootHash } = mmr.append(value);
       expect(rootHash).toBeInstanceOf(Field);
+    });
+
+    Provable.runAndCheck(() => {
+      const mmr2 = new MerkleMountainRange();
+      mmr2.append(Field(5));
+      // Other operations
     });
 
     expect(mmr.leavesCount).toEqual(UInt64.from(6));
