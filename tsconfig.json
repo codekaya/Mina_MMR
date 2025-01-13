@@ -20,5 +20,5 @@
     "allowSyntheticDefaultImports": true,
     "useDefineForClassFields": false,
   },
-  "include": ["./src"],
+  "include": ["./src", "../provable_with_error_mmr.ts"],
 }
