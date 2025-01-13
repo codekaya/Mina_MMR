@@ -399,12 +399,25 @@ function bintreeJumpRightSibling(elementIndex: UInt64): UInt64 {
  * @returns {UInt64} The left child index.
  */
 function bintreeMoveDownLeft(elementIndex: UInt64): UInt64 {
-  const height = getHeight(elementIndex);
-  if (height.equals(UInt64.zero).toBoolean()) {
-    return UInt64.zero;
-  }
-  const decrement = pow2(height);
-  return elementIndex.sub(decrement);
+  // const height = getHeight(elementIndex);
+  // if (height.equals(UInt64.zero).toBoolean()) {
+  //   return UInt64.zero;
+  // }
+  // const decrement = pow2(height);
+  // return elementIndex.sub(decrement);
+  let height = getHeight(elementIndex); // must be a provable function
+  // Check if height == 0
+  let isHeightZero: Bool = height.equals(UInt64.zero);
+
+  // In-circuit, compute decrement = 2^height
+  let decrement = pow2(height);
+  // Potential new index
+  let nextIndex = elementIndex.sub(decrement);
+
+  // If height == 0, return 0, otherwise return elementIndex - 2^height
+  let result = Provable.if(isHeightZero, UInt64.zero, nextIndex);
+
+  return result;
 }
 
 /**
@@ -413,11 +426,29 @@ function bintreeMoveDownLeft(elementIndex: UInt64): UInt64 {
  * @returns {UInt64} The height.
  */
 function getHeight(elementIndex: UInt64): UInt64 {
+  // let h = elementIndex;
+  // while (allOnes(h).not().toBoolean()) {
+  //   const highestBit = pow2(bitLength(h).sub(UInt64.one));
+  //   h = h.sub(highestBit.sub(UInt64.one));
+  // }
+  // return bitLength(h).sub(UInt64.one);
   let h = elementIndex;
-  while (allOnes(h).not().toBoolean()) {
+
+  // unroll up to 64 times
+  for (let i = 0; i < 64; i++) {
+    // check if h is all ones
+    const isAllOnes: Bool = allOnes(h);
+    // if not all ones, do:
+    //   highestBit = pow2(bitLength(h) - 1)
+    //   h = h - (highestBit - 1)
+    // else, do nothing
     const highestBit = pow2(bitLength(h).sub(UInt64.one));
-    h = h.sub(highestBit.sub(UInt64.one));
+    const newH = h.sub(highestBit.sub(UInt64.one));
+
+    h = Provable.if(isAllOnes.not(), newH, h);
   }
+
+  // once h is all ones, return bitLength(h) - 1
   return bitLength(h).sub(UInt64.one);
 }
 
