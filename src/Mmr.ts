@@ -470,15 +470,29 @@ function bitLength(num: UInt64): UInt64 {
  */
 function pow2(exponent: UInt64): UInt64 {
   // Compute 2^exponent
+  // let result = UInt64.one;
+  // const two = UInt64.from(2);
+  // let exp = exponent;
+
+  // while (exp.greaterThan(UInt64.zero).toBoolean()) {
+  //   result = result.mul(two);
+  //   exp = exp.sub(UInt64.one);
+  // }
+
+  // return result;
   let result = UInt64.one;
+  // increment exponent by 1 so we can check "exp > 1" instead of "exp > 0"
+  let exp = exponent.add(UInt64.one);
   const two = UInt64.from(2);
-  let exp = exponent;
 
-  while (exp.greaterThan(UInt64.zero).toBoolean()) {
-    result = result.mul(two);
-    exp = exp.sub(UInt64.one);
+  // fixed 64-iteration unroll
+  for (let i = 0; i < 64; i++) {
+    // if exp > 1, multiply result by 2 and decrement exp
+    const cond: Bool = exp.greaterThan(UInt64.one);
+
+    result = Provable.if(cond, result.mul(two), result);
+    exp = Provable.if(cond, exp.sub(UInt64.one), exp);
   }
-
   return result;
 }
 
