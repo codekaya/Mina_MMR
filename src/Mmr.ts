@@ -12,7 +12,7 @@ import {
   Provable,
 } from 'o1js';
 
-const MAX_ELEMENTS = 2097151; // 2,097,151 = 2^(h+1)-1   max_height=20
+const MAX_ELEMENTS = 31; // 31 = 2^(h+1)-1   max_height=4
 
 /**
  * Proof structure for inclusion proofs.
@@ -316,23 +316,47 @@ verifyProof(leaf: Field, proof: Proof): Bool {
   clear() {
     this.leavesCount = UInt64.zero;
     this.elementsCount = UInt64.zero;
-    this.hashes.fill(Field(0));
+    //this.hashes.fill(Field(0));
+    let newHashes = this.hashes.slice(); // copy the array
+    for (let i = 0; i < MAX_ELEMENTS; i++) {
+      newHashes[i] = Field(0);
+    }
+    this.hashes = newHashes;
     this.rootHash = Field(0);
   }
 
   // Utility Functions
 
-  count_ones(n: number): number {
-    let sum = 0;
-    while (n) {
-      sum++;
-      n &= n - 1;
+  count_ones(n: UInt64): UInt64 {
+    // let sum = 0;
+    // while (n) {
+    //   sum++;
+    //   n &= n - 1;
+    // }
+    // return sum;
+    let sum = UInt64.zero;
+    let temp = n;
+  
+    for (let i = 0; i < 64; i++) {
+      // Check the least significant bit
+      let lsbIsOne: Bool = temp.and(UInt64.one).equals(UInt64.one);
+  
+      // Increment sum if LSB is 1
+      sum = Provable.if(lsbIsOne, sum.add(UInt64.one), sum);
+  
+      // "Shift" temp by dividing by 2 (only if it's > 0)
+      let isPositive = temp.greaterThan(UInt64.zero);
+      temp = Provable.if(isPositive, temp.div(UInt64.from(2)), temp);
     }
+  
     return sum;
   }
 
-  leaf_count_to_mmr_size(leaf_count: number): number {
-    return 2 * leaf_count - this.count_ones(leaf_count);
+  leaf_count_to_mmr_size(leafCount: UInt64): UInt64 {
+    //return 2 * leaf_count - this.count_ones(leaf_count);
+    let twoTimes = leafCount.mul(UInt64.from(2));
+    let ones = this.count_ones(leafCount);
+    return twoTimes.sub(ones);
   }
 }
 
