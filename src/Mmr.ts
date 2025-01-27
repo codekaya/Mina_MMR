@@ -12,8 +12,7 @@ import {
   Provable,
 } from 'o1js';
 
-const MAX_ELEMENTS = 31; // 31 = 2^(h+1)-1   max_height=4
-
+const MAX_ELEMENTS = 2097151; // 2,097,151 = 2^(h+1)-1   max_height=20
 /**
  * Proof structure for inclusion proofs.
  */
