@@ -1,6 +1,5 @@
 
 # Merkle Mountain Range Implementation in o1.js
-====================================
 
 This project demonstrates how to implement a [Merkle Mountain Range (MMR)](https://github.com/opentimestamps/opentimestamps-server/blob/master/doc/merkle-mountain-range.md) using o1.js for zkApps on the Mina Protocol. It showcases how to manage large off-chain data structures while ensuring on-chain data integrity through cryptographic commitments, leveraging the power of zk-SNARKs.
 
@@ -237,14 +236,13 @@ Run the Example Code
     -   Generates a proof for the second leaf (Field(20)).
     -   (Optionally) Verifies the proof on-chain (in the commented section).
 
-You should see output in your console, including a successful log for the MMR proof verification (if un-commented in the code).
 
 * * * * *
 
 License
 -------
 
-This project is licensed under the [Apache 2.0 License](LICENSE) (see the LICENSE file for details).
+[Apache 2.0 License](LICENSE)
 
 * * * * *
 
