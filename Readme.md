@@ -93,7 +93,7 @@ Usage
 
 1.  **Create an MMR instance**
 
-  ```ts
+```ts
 
 
     import { MerkleMountainRange } from './Mmr.js';
@@ -110,28 +110,28 @@ Usage
     // Current MMR root
     const currentRoot = mmr.rootHash;
     console.log('Current MMR Root:', currentRoot.toString());
-    ```
+```
 
 
 2.  **Generate an Inclusion Proof**
 
-    ```ts
+```ts
     import { UInt64 } from 'o1js';
 
     // For the second leaf (Field(20)), the index is 2
     const proof = mmr.getProof(UInt64.from(2));
     console.log('Proof', proof);
-    ```
+```
 
 
 3.  **Verify the proof off-chain**
 
-    ```ts
+```ts
     const leaf = Field(20);
     const isValid = mmr.verifyProof(leaf, proof);
 
     console.log('Proof is valid off-chain?', isValid.toBoolean());
-    ```
+```
 
 
 ### On-chain Root Commitment
@@ -144,7 +144,7 @@ For larger MMRs, storing every node hash on-chain becomes infeasible. Instead, w
 In `MMRContract.ts`, we store:
 
 ```ts
-@state(Field) mmrRoot = State<Field>();
+    @state(Field) mmrRoot = State<Field>();
 ```
 
 and expose methods:
