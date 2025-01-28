@@ -6,7 +6,7 @@ import {
   Poseidon,
   Provable,
 } from 'o1js';
-import { MerkleMountainRange, Proof } from './Mmr'; // Adjust the import path
+import { MerkleMountainRange, Proof } from './Mmr'; 
 
 let proofsEnabled = false;
 
