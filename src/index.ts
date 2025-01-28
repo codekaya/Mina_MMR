@@ -1,7 +1,7 @@
 import { MerkleMountainRange } from './Mmr.js';
 export { MerkleMountainRange };
 
-import { Mina, PrivateKey, Field, UInt64 } from 'o1js';
+import { Mina, PrivateKey, Field, UInt64, AccountUpdate } from 'o1js';
 import { MMRContract } from './MMRContract';
 
 (async function main() {
@@ -9,21 +9,19 @@ import { MMRContract } from './MMRContract';
   let Local = await Mina.LocalBlockchain();
   Mina.setActiveInstance(Local);
 
-  let deployerAccount = Local.testAccounts[0].key;
+  const [feePayer] = Local.testAccounts;
+  //let deployerAccount = Local.testAccounts[0].key;
   let zkAppKey = PrivateKey.random();
   let zkAppAddress = zkAppKey.toPublicKey();
 
   let mmrZkApp = new MMRContract(zkAppAddress);
 
   // Deploy
-  let txn = await Local.transaction(() => ({
-    sender: deployerAccount,
-    fee: 0.1e9,
-    actions: [
-      mmrZkApp.deploy(),
-      mmrZkApp.init()
-    ],
-  }), { maxProofs: 2 });
+  let txn = await Local.transaction(feePayer, async () => {
+    AccountUpdate.fundNewAccount(feePayer);
+    await mmrZkApp.deploy();
+    await mmrZkApp.init(); // sets mmrRoot = Field(0)
+  });
   await txn.send().wait();
 
   // 2) Off-chain: Build an MMR with your library
@@ -38,11 +36,9 @@ import { MMRContract } from './MMRContract';
   let currentRoot = mmr.rootHash;
 
   // 3) On-chain: store the new root in the zkApp
-  txn = await Local.transaction(() => ({
-    sender: deployerAccount,
-    fee: 0.1e9,
-    actions: [mmrZkApp.updateRoot(currentRoot)],
-  }), { maxProofs: 1 });
+  txn = await Local.transaction(feePayer, async () => {
+    await mmrZkApp.updateRoot(currentRoot);
+  });
   await txn.send().wait();
 
   // 4) Off-chain: generate a proof for a leaf
@@ -54,12 +50,15 @@ import { MMRContract } from './MMRContract';
   let siblings = proof.siblingsHashes;
   let peaks = proof.peaksHashes;
 
-  // call verifyInclusion
-  txn = await Local.transaction(() => ({
-    sender: deployerAccount,
-    fee: 0.1e9,
-    actions: [mmrZkApp.verifyInclusion(Field(20), siblings, peaks, Field(2))],
-  }), { maxProofs: 1 });
+  // Verify inclusion
+  txn = await Local.transaction(feePayer, async () => {
+    await mmrZkApp.verifyInclusion(
+      Field(20),
+      siblings,
+      peaks,
+      Field(2)
+    );
+  });
   await txn.send().wait();
 
   console.log('MMR proof verified successfully on-chain!');

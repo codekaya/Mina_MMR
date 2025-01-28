@@ -11,6 +11,8 @@ import {
     Poseidon,
   } from 'o1js';
   
+
+  const MAX_PEAKS = 10;
   /**
    * A minimal zkApp that stores a single MMR root in on-chain state.
    */
