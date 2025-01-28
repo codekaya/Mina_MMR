@@ -1,33 +1,5 @@
+
 # Merkle Mountain Range Implementation in o1.js
-
-This project demonstrates how to implement a Merkle Mountain Range (MMR) using o1.js for zkApps on the Mina Protocol. It showcases how to manage off-chain data structures while ensuring on-chain data integrity through cryptographic commitments, leveraging the power of zk-SNARKs.
-
-## Installation
-
-Clone the repository and install the dependencies using npm:
-
-```bash
-# Clone the repository
-git clone https://github.com/codekaya/Mina_MMR
-cd Mina_MMR
-
-# Install dependencies
-npm install
-
-# Ensure o1.js is installed
-npm install o1js
-
-# Run test cases to verify the MMR implementation:
-npm run test
-
-```
-
-## License
-
-[Apache-2.0](LICENSE)
-
-
-Merkle Mountain Range (MMR) in o1.js
 ====================================
 
 This project demonstrates how to implement a [Merkle Mountain Range (MMR)](https://github.com/opentimestamps/opentimestamps-server/blob/master/doc/merkle-mountain-range.md) using o1.js for zkApps on the Mina Protocol. It showcases how to manage large off-chain data structures while ensuring on-chain data integrity through cryptographic commitments, leveraging the power of zk-SNARKs.
@@ -60,11 +32,9 @@ With **o1.js**, we can build an MMR in JavaScript or TypeScript, perform all hea
 Project Structure
 -----------------
 
-scss
+```scss
 
-KopyalaDüzenle
-
-`Mina_MMR/
+Mina_MMR/
   ├─ src/
   │   ├─ Mmr.ts            // Core MMR logic (append, getProof, verifyProof, etc.)
   │   ├─ MMRContract.ts    // Minimal zkApp storing MMR root on-chain
@@ -74,7 +44,8 @@ KopyalaDüzenle
   ├─ package.json
   ├─ tsconfig.json
   ├─ README.md
-  ...`
+  ...
+```
 
 1.  **`Mmr.ts`**\
     Contains the `MerkleMountainRange` class. This is where you append leaves, generate proofs, verify proofs, and manage the internal data (e.g., storing all node hashes).
@@ -93,43 +64,26 @@ KopyalaDüzenle
 
 * * * * *
 
-Installation
-------------
+## Installation
 
-1.  **Clone the repository**
 
-bash
+Clone the repository and install the dependencies using npm:
 
-KopyalaDüzenle
+```bash
+# Clone the repository
+git clone https://github.com/codekaya/Mina_MMR
+cd Mina_MMR
 
-`git clone https://github.com/codekaya/Mina_MMR
-cd Mina_MMR`
+# Install dependencies
+npm install
 
-1.  **Install dependencies**
+# Ensure o1.js is installed
+npm install o1js
 
-bash
+# Run test cases to verify the MMR implementation:
+npm run test
 
-KopyalaDüzenle
-
-`npm install`
-
-1.  **Ensure `o1.js` is installed**\
-    (It should already be included in `package.json`, but just in case):
-
-bash
-
-KopyalaDüzenle
-
-`npm install o1js`
-
-1.  **(Optional) Run tests**\
-    If you have test files in the `test` directory, run:
-
-bash
-
-KopyalaDüzenle
-
-`npm run test`
+```
 
 * * * * *
 
@@ -140,11 +94,10 @@ Usage
 
 1.  **Create an MMR instance**
 
-    ts
+  ```ts
 
-    KopyalaDüzenle
 
-    `import { MerkleMountainRange } from './Mmr.js';
+    import { MerkleMountainRange } from './Mmr.js';
     import { Field } from 'o1js';
 
     // Off-chain
@@ -157,30 +110,30 @@ Usage
 
     // Current MMR root
     const currentRoot = mmr.rootHash;
-    console.log('Current MMR Root:', currentRoot.toString());`
+    console.log('Current MMR Root:', currentRoot.toString());
+    ```
+
 
 2.  **Generate an Inclusion Proof**
 
-    ts
-
-    KopyalaDüzenle
-
-    `import { UInt64 } from 'o1js';
+    ```ts
+    import { UInt64 } from 'o1js';
 
     // For the second leaf (Field(20)), the index is 2
     const proof = mmr.getProof(UInt64.from(2));
-    console.log('Proof', proof);`
+    console.log('Proof', proof);
+    ```
+
 
 3.  **Verify the proof off-chain**
 
-    ts
-
-    KopyalaDüzenle
-
-    `const leaf = Field(20);
+    ```ts
+    const leaf = Field(20);
     const isValid = mmr.verifyProof(leaf, proof);
 
-    console.log('Proof is valid off-chain?', isValid.toBoolean());`
+    console.log('Proof is valid off-chain?', isValid.toBoolean());
+    ```
+
 
 ### On-chain Root Commitment
 
@@ -191,16 +144,15 @@ For larger MMRs, storing every node hash on-chain becomes infeasible. Instead, w
 
 In `MMRContract.ts`, we store:
 
-ts
-
-KopyalaDüzenle
-
-`@state(Field) mmrRoot = State<Field>();`
+```ts
+@state(Field) mmrRoot = State<Field>();
+```
 
 and expose methods:
 
 -   `init()` -- sets `mmrRoot` to `Field(0)`.
 -   `updateRoot(newRoot: Field)` -- updates the on-chain root to `newRoot`.
+
 
 ### Verifying Inclusion On-chain
 
@@ -212,11 +164,10 @@ To check if a leaf exists in the MMR **on-chain**, you'd:
 
 A simplified example method is shown in `MMRContract.ts` (commented out in the code for reference):
 
-ts
+```ts
 
-KopyalaDüzenle
 
-`@method verifyInclusion( leaf: Field,
+@method verifyInclusion( leaf: Field,
   siblings: Field[],
   peaks: Field[],
   index: Field ) {
@@ -238,7 +189,9 @@ KopyalaDüzenle
 
   // 4) Check equality
   computedRoot.assertEquals(rootStored);
-}`
+}
+```
+
 
 * * * * *
 
@@ -261,20 +214,19 @@ Run the Example Code
 
 1.  **Compile and Deploy** (from `index.ts`)
 
-    bash
+    ```bash
+    # in the root project directory
+    npx tsc 
+    ```
 
-    KopyalaDüzenle
-
-    `# in the root project directory
-    npx tsc `
 
 2.  **Execute `index.ts`** (example script)
 
-    bash
+    ```bash
 
-    KopyalaDüzenle
 
-    `node dist/src/index.js`
+    node dist/src/index.js
+    ```
 
     This script:
 
