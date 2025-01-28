@@ -24,7 +24,7 @@ Overview
 
 **Merkle Mountain Ranges** are an append-only data structure composed of multiple "peaks" (perfect binary trees). They allow efficient proofs of inclusion while permitting new leaves to be appended without having to rebuild the entire structure. In the **Mina Protocol** context, MMRs are ideal when you want to keep large datasets off-chain but still prove individual items' membership on-chain.
 
-With **o1.js**, we can build an MMR in JavaScript or TypeScript, perform all heavy operations off-chain, and only store (or verify) the MMR's root (commitment) inside the zkApp's on-chain state. This aligns perfectly with Mina's design principle: keep on-chain data minimal, while leveraging powerful zk-SNARK proofs to ensure correctness.
+With **o1.js**, we can build an MMR, perform all heavy operations off-chain, and only store (or verify) the MMR's root (commitment) inside the zkApp's on-chain state. This aligns perfectly with Mina's design principle: keep on-chain data minimal, while leveraging powerful zk-SNARK proofs to ensure correctness.
 
 * * * * *
 
@@ -39,7 +39,7 @@ Mina_MMR/
   │   ├─ MMRContract.ts    // Minimal zkApp storing MMR root on-chain
   │   └─ index.ts          // Example usage: off-chain building + on-chain usage
   ├─ test/
-  │   └─ ...               // Test files (if any)
+  │   └─ Mmr.test.ts               
   ├─ package.json
   ├─ tsconfig.json
   ├─ README.md
@@ -248,7 +248,7 @@ License
 
 ### Further Reading / Proposal
 
-For a more detailed explanation, including a roadmap, milestones, and deeper insight into how this MMR library can be extended or integrated into larger zkApp projects, please see the accompanying **proposal** in the repository.
+For a more detailed explanation, including a roadmap, milestones, and deeper insight into how this MMR library can be extended or integrated into larger zkApp projects, please see the accompanying [MMR proposal](https://forums.minaprotocol.com/t/merkle-mountain-range-in-o1js/6642) in the mina forum.
 
 * * * * *
 
