@@ -224,7 +224,7 @@ Run the Example Code
     ```bash
 
 
-    node dist/src/index.js
+    node build/src/index.js
     ```
 
     This script:

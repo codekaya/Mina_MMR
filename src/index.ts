@@ -17,7 +17,7 @@ import { MMRContract } from './MMRContract.js';
 
   await MMRContract.compile();
 
-  console.log("in above")
+  //console.log("in above")
   // Deploy
   let txn = await Local.transaction(feePayer, async () => {
     AccountUpdate.fundNewAccount(feePayer);
@@ -54,7 +54,7 @@ import { MMRContract } from './MMRContract.js';
   await txn.prove();
   await txn.sign([feePayer.key]).send();
   //await txn.send().wait();
-  console.log("in here")
+  //console.log("in here")
 
   // 4) Off-chain: generate a proof for a leaf
   let proof = mmr.getProof(UInt64.from(2)); // second leaf => Field(20)
