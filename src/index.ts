@@ -2,7 +2,7 @@ import { MerkleMountainRange } from './Mmr.js';
 export { MerkleMountainRange };
 
 import { Mina, PrivateKey, Field, UInt64, AccountUpdate } from 'o1js';
-import { MMRContract } from './MMRContract.js';
+import { MMRContract, MMRProof } from './MMRContract.js';
 
 (async function main() {
   // 1) Setup a local Mina blockchain + deploy a new instance of MMRContract
@@ -46,7 +46,7 @@ import { MMRContract } from './MMRContract.js';
   console.log("in middle")
   // get the "root" from the MMR
   let currentRoot = mmr.rootHash;
-
+  console.log(currentRoot);
   // 3) On-chain: store the new root in the zkApp
   txn = await Local.transaction(feePayer, async () => {
     await mmrZkApp.updateRoot(currentRoot);
@@ -61,20 +61,44 @@ import { MMRContract } from './MMRContract.js';
   console.log('Proof: ', proof);
 
   // 5) On-chain: verify the proof (assuming we made a method that takes siblings/peaks, etc.)
-  // We'll just do a naive version for demonstration
-  let siblings = proof.siblingsHashes;
-  let peaks = proof.peaksHashes;
+  // let siblings = proof.siblingsHashes;
+  // let peaks = proof.peaksHashes;
+  // Pad arrays with zeros up to required length
+  const padArray = (arr: Field[], length: number): Field[] => {
+    const result = [...arr];
+    while (result.length < length) {
+      result.push(Field(0));
+    }
+    return result;
+  };
 
+  let siblings = padArray(proof.siblingsHashes, 16);  
+  let peaks = padArray(proof.peaksHashes, 16);     
+ 
+
+  let mmr_proof = new MMRProof({
+    elementIndex: UInt64.from(2),
+    elementHash: Field(20),
+    siblingsHashes: siblings,
+    peaksHashes: peaks,
+    elementsCount: proof.elementsCount
+  });
+
+  let baggedHash = mmr.preprocess(Field(20),proof);
+  //console.log(baggedHash,"baggedhash");
+
+  //  On-chain: verify the proof
   // Verify inclusion
-  // txn = await Local.transaction(feePayer, async () => {
-  //   await mmrZkApp.verifyInclusion(
-  //     Field(20),
-  //     siblings,
-  //     peaks,
-  //     Field(2)
-  //   );
-  // });
-  // await txn.send().wait();
+  txn = await Local.transaction(feePayer, async () => {
+    await mmrZkApp.verifyInclusion(Field(20), mmr_proof, baggedHash);
+  });
+  await txn.prove();
+  await txn.sign([feePayer.key]).send();
+  //await txn.send().wait();
+
+  //let proof = mmr.getProof(UInt64.from(2));
+  console.log('Proof: ', proof);
+
 
   console.log('MMR proof verified successfully on-chain!');
 })();

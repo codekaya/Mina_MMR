@@ -253,7 +253,58 @@ verifyProof(leaf: Field, proof: Proof): Bool {
   return recomputedRootHash.equals(this.rootHash);
 }
 
+/**
+* Preprocess the inclusion proof of a leaf in the MMR.
+* @param {Field} leaf - The leaf value.
+* @param {Proof} proof - The inclusion proof.
+* @returns {Bool} True if the proof is valid.
+*/
+preprocess(leaf: Field, proof: Proof): Field {
+  let { elementIndex, siblingsHashes, peaksHashes, elementsCount } = proof;
+ 
+  if (elementIndex.lessThan(UInt64.one).toBoolean()) {
+    throw new Error('Index must be greater than or equal to 1');
+  }
+  if (elementIndex.greaterThan(elementsCount).toBoolean()) {
+    throw new Error('Index must be in the tree');
+  }
+ 
+  let hash = leaf;
+ 
+  // Reconstruct the hash up to the peak
+  for (let i = 0; i < siblingsHashes.length; i++) {
+    const proofHash = siblingsHashes[i];
+    const isRight = getHeight(elementIndex.add(UInt64.one))
+      .equals(getHeight(elementIndex).add(UInt64.one))
+      .toBoolean();
+    elementIndex = isRight
+      ? elementIndex.add(UInt64.one)
+      : elementIndex.add(parentOffset(getHeight(elementIndex)));
+    hash = isRight
+      ? Poseidon.hash([proofHash, hash])
+      : Poseidon.hash([hash, proofHash]);
+  }
+ 
+  // Replace the corresponding peak hash with the reconstructed hash
+  const reconstructedPeaks = peaksHashes.map((peakHash, idx) => {
+    // Check if this peak index corresponds to the reconstructed hash    
+    if (peakHash.equals(hash).toBoolean()) {
+      return hash;
+    } else {
+      return peakHash;
+    }
+  });
+ 
+  // Bag the peaks to recompute the root hash
+  const baggedHash = this.bagThePeaks(reconstructedPeaks);
 
+  // Recompute the root hash
+  //const recomputedRootHash = this.calculateRootHash(baggedHash, elementsCount);
+ 
+  // Compare the recomputed root hash with the MMR's root hash
+  //return recomputedRootHash.equals(this.rootHash);
+  return baggedHash;
+ }
   /**
    * Retrieves the current peaks of the MMR.
    * @returns {Field[]} Array of peak hashes.
@@ -295,7 +346,7 @@ verifyProof(leaf: Field, proof: Proof): Bool {
    * @returns {Field} The new root hash.
    */
   calculateRootHash(bag: Field, leafCount: UInt64): Field {
-    return Poseidon.hash([Field(leafCount.toBigInt()), bag]);
+    return Poseidon.hash([leafCount.value, bag]);
   }
 
   /**
