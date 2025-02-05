@@ -35,7 +35,7 @@ import { MMRContract, MMRProof } from './MMRContract.js';
 
 
 
-  // 2) Off-chain: Build an MMR with your library
+  // 2) Off-chain: Build an MMR with
   let mmr = new MerkleMountainRange();
 
   // append some leaves
@@ -72,8 +72,8 @@ import { MMRContract, MMRProof } from './MMRContract.js';
     return result;
   };
 
-  let siblings = padArray(proof.siblingsHashes, 16);  
-  let peaks = padArray(proof.peaksHashes, 16);     
+  let siblings = padArray(proof.siblingsHashes, 8);  
+  let peaks = padArray(proof.peaksHashes, 8);     
  
 
   let mmr_proof = new MMRProof({

@@ -19,8 +19,8 @@ const MAX_PEAKS = 10;
 export class MMRProof extends Struct({
   elementIndex: UInt64,
   elementHash: Field,
-  siblingsHashes: Provable.Array(Field, 16),
-  peaksHashes: Provable.Array(Field, 16),
+  siblingsHashes: Provable.Array(Field, 8),
+  peaksHashes: Provable.Array(Field, 8),
   elementsCount: UInt64,
 }) {}
 
@@ -44,7 +44,7 @@ export class MMRContract extends SmartContract {
    * In a real app, you'd do permission checks or signatures.
    */
   @method async updateRoot(newRoot: Field) {
-      // For now, we just store it. (You might require a signature, etc.)
+      // For now, we just store it. (It require a signature, etc.)
       this.mmrRoot.set(newRoot);
   }
 

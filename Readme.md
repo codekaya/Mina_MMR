@@ -59,7 +59,7 @@ Mina_MMR/
     -   Deploy the `MMRContract`.
     -   Build an MMR off-chain (append leaves, get root).
     -   Commit the root on-chain.
-    -   Generate and (optionally) verify an inclusion proof on-chain.
+    -   Generate and verify an inclusion proof on-chain.
 
 * * * * *
 
@@ -234,7 +234,7 @@ Run the Example Code
     -   Builds an MMR off-chain (3 leaves).
     -   Commits the final root on-chain.
     -   Generates a proof for the second leaf (Field(20)).
-    -   (Optionally) Verifies the proof on-chain (in the commented section).
+    -   Verifies the proof on-chain.
 
 
 * * * * *
